@@ -7,6 +7,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not set')
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 export default supabase

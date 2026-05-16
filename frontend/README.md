@@ -1,6 +1,6 @@
 # Bay frontend (React + TypeScript + Vite + Tailwind)
 
-This is a minimal starter frontend scaffold intended to be integrated with the existing PHP backend or migrated to Supabase. It is configured for local development and for deployment to Vercel.
+This is a React conversion of the cafe system UI. It now includes the login screen, signup screen, and the cafe order menu as React pages.
 
 Quick start
 
@@ -29,24 +29,30 @@ Supabase integration
 - Create a `.env` in `frontend/` with:
 
 ```
+VITE_API_BASE_URL=http://localhost/bay
 VITE_SUPABASE_URL=your-url
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-- Use `@supabase/supabase-js` in the app to connect (see Supabase docs).
+- `VITE_API_BASE_URL` points the React app to your existing PHP backend while developing locally.
+- Use `@supabase/supabase-js` when you are ready to connect the UI to a real Supabase database.
 
 Wiring example (done in this scaffold)
 
-- `src/lib/supabaseClient.ts` creates the Supabase client using `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
-- `src/App.tsx` runs a simple check against a `test` table and shows connection status.
-- To verify locally: set the env vars, run `npm run dev`, and confirm the page shows `Status: ok`.
+- `/` opens the login screen.
+- `/signup` opens the registration screen.
+- `/cafe` opens the cafe ordering screen.
+- `src/App.tsx` now contains the React version of your current cafe UI, including menu cards, cart, login, and signup flows.
+- Login and signup submit to `auth_api.php`.
+- The cafe menu loads from `products_api.php`.
+- Checkout submits to `place_order.php`.
 
-If you don't have a `test` table, either create one in Supabase or change the query in `src/App.tsx` to a table you have.
+If you want the pages to use Supabase later, replace the PHP API calls with Supabase queries and auth.
 
 Deploy to Vercel
 
 - Push the repo to GitHub and import the `bay` repo into Vercel.
-- Set the environment variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the Vercel project settings.
+- Set the environment variables `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY` in the Vercel project settings.
 - Vercel will auto-deploy the `frontend` folder (set Root to `frontend` in the import settings) and provide a staging URL.
 
 Notes
