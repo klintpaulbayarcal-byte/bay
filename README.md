@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
 After creating the table, manually insert one admin user:
 ```sql
 INSERT INTO users (fullname, email, username, password, role) 
-VALUES ('Admin User', 'admin@example.com', 'admin', PASSWORD('admin123'), 'admin');
+VALUES ('Administrator', 'admin@example.com', 'jireh', '$2y$10$...', 'admin');
 ```
 
 *Or use PHP password_hash():*
@@ -69,4 +69,5 @@ VALUES ('Admin User', 'admin@example.com', 'admin', '$2y$10$...', 'admin');
 
 - **New Users**: `/web_system/signup.html`
 - **Existing Users**: `/web_system/login.html`
-- **Admin Credentials**: username: `admin`, password: `admin123`
+- **Admin Credentials**: username: `jireh`, password: `faith`
+- **Staff Credentials (example)**: username: `jai`, password: `212121`

@@ -3,6 +3,8 @@ session_start();
 
 header('Content-Type: application/json');
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
@@ -55,12 +57,7 @@ if ($customerName === '' || !is_array($items) || count($items) === 0) {
     exit;
 }
 
-$conn = new mysqli('localhost', 'root', '', 'web_system');
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
-    exit;
-}
+$conn = get_auth_database_connection();
 
 // Ensure orders table exists even if admin dashboard was never opened.
 $conn->query("CREATE TABLE IF NOT EXISTS orders (

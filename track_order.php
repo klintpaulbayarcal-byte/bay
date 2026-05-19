@@ -1,8 +1,10 @@
 <?php
 session_start();
 
-$conn = new mysqli('localhost', 'root', '', 'web_system');
-$dbError = $conn->connect_error ? 'Database connection failed.' : '';
+require_once __DIR__ . '/auth_bootstrap.php';
+
+$conn = get_auth_database_connection();
+$dbError = '';
 
 $order = null;
 $orderItems = [];

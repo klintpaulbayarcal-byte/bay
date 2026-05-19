@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 if (!isset($_SESSION['username']) || ($_SESSION['role'] ?? '') !== 'staff') {
     header('Location: lagin.html');
     exit;
@@ -11,11 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$conn = new mysqli('localhost', 'root', '', 'web_system');
-if ($conn->connect_error) {
-    header('Location: staff_panel.php?status=report_error');
-    exit;
-}
+$conn = get_auth_database_connection();
 
 $conn->query("CREATE TABLE IF NOT EXISTS staff_sales_reports (
     id INT AUTO_INCREMENT PRIMARY KEY,

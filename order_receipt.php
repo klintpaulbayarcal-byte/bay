@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 $orderId = (int)($_GET['order_id'] ?? 0);
 $copyType = trim($_GET['copy'] ?? 'customer');
 
@@ -12,10 +14,7 @@ if (!in_array($copyType, ['customer', 'kitchen'], true)) {
     $copyType = 'customer';
 }
 
-$conn = new mysqli('localhost', 'root', '', 'web_system');
-if ($conn->connect_error) {
-    die('<html><head><style>body{font-family:Arial;padding:20px;color:#c00;}</style></head><body><h2>Database Error</h2><p>Could not connect to database. Please try again later.</p></body></html>');
-}
+$conn = get_auth_database_connection();
 
 $orderStmt = $conn->prepare('SELECT id, customer_name, customer_phone, note, subtotal, tax, total, status, created_at FROM orders WHERE id = ?');
 if (!$orderStmt) {

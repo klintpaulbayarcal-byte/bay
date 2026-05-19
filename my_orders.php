@@ -1,15 +1,14 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 if (!isset($_SESSION['id'])) {
     header('Location: lagin.html');
     exit;
 }
 
-$conn = new mysqli('localhost', 'root', '', 'web_system');
-if ($conn->connect_error) {
-    die('Database connection failed: ' . $conn->connect_error);
-}
+$conn = get_auth_database_connection();
 
 // Support older databases created before user_id tracking.
 $userIdColumn = $conn->query("SHOW COLUMNS FROM orders LIKE 'user_id'");

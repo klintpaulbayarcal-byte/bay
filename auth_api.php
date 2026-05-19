@@ -2,6 +2,8 @@
 session_start();
 header('Content-Type: application/json');
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 $rawBody = file_get_contents('php://input');
 $payload = json_decode($rawBody, true);
 if (!is_array($payload)) {
@@ -12,16 +14,15 @@ $action = strtolower(trim((string)($payload['action'] ?? $_GET['action'] ?? 'log
 $username = trim((string)($payload['username'] ?? ''));
 $password = trim((string)($payload['password'] ?? ''));
 
-$conn = new mysqli('localhost', 'root', '', 'web_system');
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
-    exit;
-}
+$conn = null;
 
-$mustChangeCheck = $conn->query("SHOW COLUMNS FROM users LIKE 'must_change_password'");
-if ($mustChangeCheck && $mustChangeCheck->num_rows === 0) {
-    $conn->query("ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0");
+try {
+    $conn = get_auth_database_connection();
+    ensure_default_login_accounts($conn);
+} catch (RuntimeException $exception) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()]);
+    exit;
 }
 
 if ($action === 'register') {

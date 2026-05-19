@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 // Check if user is logged in and is admin
 if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
     header("Location: lagin.html");
@@ -28,10 +30,7 @@ if ($id === (int)($_SESSION['id'] ?? 0) && $role !== 'admin') {
     exit;
 }
 
-$conn = new mysqli("localhost", "root", "", "web_system");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+$conn = get_auth_database_connection();
 
 // Update username and role
 $stmt = $conn->prepare("UPDATE users SET username = ?, role = ? WHERE id = ?");

@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 $fullname = trim($_POST['fullname'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $username = trim($_POST['username'] ?? '');
@@ -20,10 +22,7 @@ if ($password !== $confirmPassword) {
 }
 
 // Connect to database
-$conn = new mysqli("localhost", "root", "", "web_system");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+$conn = get_auth_database_connection();
 
 // Check if username already exists
 $checkStmt = $conn->prepare("SELECT id FROM users WHERE username = ?");

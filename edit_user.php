@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 // Check if user is logged in and is admin
 if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
     header("Location: lagin.html");
@@ -14,10 +16,7 @@ if ($userId === 0) {
     exit;
 }
 
-$conn = new mysqli("localhost", "root", "", "web_system");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+$conn = get_auth_database_connection();
 
 // Fetch user data needed for admin edit form
 $stmt = $conn->prepare("SELECT id, username, role FROM users WHERE id = ?");

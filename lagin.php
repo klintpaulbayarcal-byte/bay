@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 $username = trim($_POST['username'] ?? '');
 // also trim password to avoid accidental spaces
 $password = trim($_POST['password'] ?? '');
@@ -10,15 +12,11 @@ if (empty($username) || empty($password)) {
     exit;
 }
 
-$conn = new mysqli("localhost", "root", "", "web_system");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Ensure force-change column exists for older databases.
-$columnCheck = $conn->query("SHOW COLUMNS FROM users LIKE 'must_change_password'");
-if ($columnCheck && $columnCheck->num_rows === 0) {
-    $conn->query("ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0");
+try {
+    $conn = get_auth_database_connection();
+    ensure_default_login_accounts($conn);
+} catch (RuntimeException $exception) {
+    die($exception->getMessage());
 }
 
 // Query user by username

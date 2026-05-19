@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 if (!isset($_SESSION['username']) || ($_SESSION['role'] ?? '') !== 'admin') {
     header('Location: lagin.html');
     exit;
@@ -17,11 +19,7 @@ if ($userId <= 0) {
     exit;
 }
 
-$conn = new mysqli('localhost', 'root', '', 'web_system');
-if ($conn->connect_error) {
-    header('Location: admin_dashboard.php?tab=staff&status=reset_error');
-    exit;
-}
+$conn = get_auth_database_connection();
 
 // Ensure force-change column exists for older databases.
 $columnCheck = $conn->query("SHOW COLUMNS FROM users LIKE 'must_change_password'");

@@ -1,10 +1,12 @@
 <?php
 session_start();
 
-$conn = new mysqli("localhost", "root", "", "web_system");
+require_once __DIR__ . '/auth_bootstrap.php';
+
+$conn = get_auth_database_connection();
 $products = [];
 
-if (!$conn->connect_error) {
+if ($conn) {
     $categoryCheck = $conn->query("SHOW COLUMNS FROM products LIKE 'category'");
     if ($categoryCheck && $categoryCheck->num_rows === 0) {
         $conn->query("ALTER TABLE products ADD COLUMN category VARCHAR(30) NOT NULL DEFAULT 'coffee' AFTER name");

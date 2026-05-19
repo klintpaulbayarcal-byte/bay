@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 if (!isset($_SESSION['username']) || !in_array($_SESSION['role'] ?? '', ['admin', 'staff'], true)) {
     header('Location: lagin.html');
     exit;
@@ -21,11 +23,7 @@ if ($orderId <= 0 || !in_array($status, $allowed, true)) {
     exit;
 }
 
-$conn = new mysqli('localhost', 'root', '', 'web_system');
-if ($conn->connect_error) {
-    header('Location: staff_panel.php?status=error');
-    exit;
-}
+$conn = get_auth_database_connection();
 
 $stmt = $conn->prepare('UPDATE orders SET status = ? WHERE id = ?');
 $stmt->bind_param('si', $status, $orderId);

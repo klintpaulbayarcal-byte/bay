@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/auth_bootstrap.php';
+
 if (!isset($_SESSION['username']) || !in_array($_SESSION['role'] ?? '', ['admin', 'staff'], true)) {
     header('Location: lagin.html');
     exit;
@@ -11,10 +13,7 @@ if ($orderId <= 0) {
     die('Invalid order.');
 }
 
-$conn = new mysqli('localhost', 'root', '', 'web_system');
-if ($conn->connect_error) {
-    die('Connection failed: ' . $conn->connect_error);
-}
+$conn = get_auth_database_connection();
 
 $orderStmt = $conn->prepare('SELECT * FROM orders WHERE id = ? LIMIT 1');
 $orderStmt->bind_param('i', $orderId);

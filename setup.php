@@ -1,7 +1,13 @@
 <?php
 // Database setup script - creates the database and test user if they don't exist
 
-$conn = new mysqli("localhost", "root", "");
+require_once __DIR__ . '/auth_bootstrap.php';
+
+try {
+    $conn = get_auth_database_connection();
+} catch (RuntimeException $exception) {
+    die('Connection failed: ' . $exception->getMessage() . '<br>Make sure MySQL server is running!');
+}
 
 // Check connection
 if ($conn->connect_error) {
@@ -145,30 +151,54 @@ if ($checkTest->num_rows == 0) {
 $checkTest->close();
 
 // Add or fix admin user
-$checkAdmin = $conn->prepare("SELECT id,password FROM users WHERE username = 'admin'");
+$adminUsername = "jireh";
+$adminPassword = "faith";
+$adminRole = "admin";
+$adminFullname = "Administrator";
+$adminEmail = "admin@example.com";
+$hashedAdminPassword = password_hash($adminPassword, PASSWORD_DEFAULT);
+
+$checkAdmin = $conn->prepare("SELECT id, username FROM users WHERE username = ? LIMIT 1");
+$checkAdmin->bind_param("s", $adminUsername);
 $checkAdmin->execute();
 $checkAdmin->store_result();
 
 if ($checkAdmin->num_rows == 0) {
-    // admin missing, create it with hashed password
-    $hashedPassword = password_hash("admin123", PASSWORD_DEFAULT);
-    $insertAdmin = $conn->prepare("INSERT INTO users (fullname, email, username, password, role) VALUES (?, ?, ?, ?, ?)");
-    $insertAdmin->bind_param("sssss", $fullname, $email, $username, $hashedPassword, $role);
-    
-    $fullname = "Administrator";
-    $email = "admin@example.com";
-    $username = "admin";
-    $role = "admin";
-    
-    if ($insertAdmin->execute()) {
-        echo "Admin user created successfully!<br>";
-        echo "<strong>Admin Credentials:</strong><br>";
-        echo "Username: admin<br>";
-        echo "Password: admin123<br>";
+    $legacyAdmin = $conn->prepare("SELECT id FROM users WHERE username = 'admin' AND role = 'admin' LIMIT 1");
+    $legacyAdmin->execute();
+    $legacyAdmin->store_result();
+
+    if ($legacyAdmin->num_rows > 0) {
+        $legacyAdmin->bind_result($legacyAdminId);
+        $legacyAdmin->fetch();
+
+        $updateAdmin = $conn->prepare("UPDATE users SET fullname = ?, email = ?, username = ?, password = ?, role = ? WHERE id = ?");
+        $updateAdmin->bind_param("sssssi", $adminFullname, $adminEmail, $adminUsername, $hashedAdminPassword, $adminRole, $legacyAdminId);
+
+        if ($updateAdmin->execute()) {
+            echo "Admin user updated successfully!<br>";
+            echo "<strong>Admin Credentials:</strong><br>";
+            echo "Username: jireh<br>";
+            echo "Password: faith<br>";
+        }
+
+        $updateAdmin->close();
+    } else {
+        $insertAdmin = $conn->prepare("INSERT INTO users (fullname, email, username, password, role) VALUES (?, ?, ?, ?, ?)");
+        $insertAdmin->bind_param("sssss", $adminFullname, $adminEmail, $adminUsername, $hashedAdminPassword, $adminRole);
+
+        if ($insertAdmin->execute()) {
+            echo "Admin user created successfully!<br>";
+            echo "<strong>Admin Credentials:</strong><br>";
+            echo "Username: jireh<br>";
+            echo "Password: faith<br>";
+        }
+        $insertAdmin->close();
     }
-    $insertAdmin->close();
+
+    $legacyAdmin->close();
 } else {
-    // admin exists; leave password as-is and report existence
+    // admin already exists with the requested username
     echo "Admin user already exists<br>";
 }
 
@@ -207,4 +237,34 @@ if ((int)($productRow['total'] ?? 0) === 0) {
 $conn->close();
 
 echo "<br><strong>Setup completed! You can now <a href='lagin.html'>login here</a></strong>";
+?>
+
+<?php
+// Ensure a default staff account exists (username: jai / password: 212121)
+try {
+    $c = get_auth_database_connection();
+} catch (RuntimeException $exception) {
+    $c = null;
+}
+
+if ($c && !$c->connect_error) {
+    $checkStaff = $c->prepare("SELECT id FROM users WHERE username = 'jai'");
+    $checkStaff->execute();
+    $checkStaff->store_result();
+
+    if ($checkStaff->num_rows == 0) {
+        $hashed = password_hash("212121", PASSWORD_DEFAULT);
+        $insert = $c->prepare("INSERT INTO users (fullname, email, username, password, role, must_change_password) VALUES (?, ?, ?, ?, 'staff', 0)");
+        $fullname = "Jai";
+        $email = "jai@example.com";
+        $username = "jai";
+        $insert->bind_param("ssss", $fullname, $email, $username, $hashed);
+        $insert->execute();
+        $insert->close();
+        echo "<br>Default staff account created: Username: jai Password: 212121";
+    } else {
+        echo "<br>Staff user 'jai' already exists";
+    }
+    $checkStaff->close();
+}
 ?>

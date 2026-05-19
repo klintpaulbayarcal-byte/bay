@@ -1,12 +1,9 @@
 <?php
 // Payment webhook stub: for production, verify gateway signature and payload.
 
-$conn = new mysqli('localhost', 'root', '', 'web_system');
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo 'DB error';
-    exit;
-}
+require_once __DIR__ . '/auth_bootstrap.php';
+
+$conn = get_auth_database_connection();
 
 $orderId = (int)($_GET['order_id'] ?? $_POST['order_id'] ?? 0);
 $gateway = trim((string)($_GET['gateway'] ?? $_POST['gateway'] ?? ''));
