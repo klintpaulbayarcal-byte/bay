@@ -1,10 +1,17 @@
 <?php
-session_start();
+require_once __DIR__ . '/app_bootstrap.php';
+start_app_session();
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/auth_bootstrap.php';
 
-$conn = get_auth_database_connection();
+try {
+    $conn = get_auth_database_connection();
+} catch (RuntimeException $exception) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()]);
+    exit;
+}
 
 $conn->query("CREATE TABLE IF NOT EXISTS order_status_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,

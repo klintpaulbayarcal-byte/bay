@@ -146,11 +146,6 @@ function apiUrl(path: string) {
     return `${apiBase || runtimeOrigin}${path}`
 }
 
-function backendUrl(path: string) {
-    const base = apiBase || runtimeOrigin
-    return `${base}${path}`
-}
-
 function mapApiProduct(product: ApiProduct): Product {
     return {
         id: Number(product.id),
@@ -207,7 +202,7 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
             setState((current) => ({ ...current, message: data.message || 'Login successful', messageType: 'success' }))
 
             if (data.role === 'admin' || data.role === 'staff') {
-                window.location.assign(backendUrl(`/${data.redirect_to || 'staff_panel.php'}`))
+                window.location.assign(apiUrl(`/${data.redirect_to || 'staff_panel.php'}`))
                 return
             }
 

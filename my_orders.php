@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/app_bootstrap.php';
+start_app_session();
 
 require_once __DIR__ . '/auth_bootstrap.php';
 

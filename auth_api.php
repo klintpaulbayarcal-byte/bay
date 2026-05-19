@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/app_bootstrap.php';
+start_app_session();
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/auth_bootstrap.php';

@@ -1,9 +1,18 @@
 <?php
-session_start();
+require_once __DIR__ . '/app_bootstrap.php';
+start_app_session();
 
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/auth_bootstrap.php';
+
+try {
+    $conn = get_auth_database_connection();
+} catch (RuntimeException $exception) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()]);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -56,8 +65,6 @@ if ($customerName === '' || !is_array($items) || count($items) === 0) {
     echo json_encode(['success' => false, 'message' => 'Customer name and items are required']);
     exit;
 }
-
-$conn = get_auth_database_connection();
 
 // Ensure orders table exists even if admin dashboard was never opened.
 $conn->query("CREATE TABLE IF NOT EXISTS orders (

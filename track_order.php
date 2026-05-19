@@ -1,9 +1,16 @@
 <?php
-session_start();
+require_once __DIR__ . '/app_bootstrap.php';
+start_app_session();
 
 require_once __DIR__ . '/auth_bootstrap.php';
 
-$conn = get_auth_database_connection();
+try {
+    $conn = get_auth_database_connection();
+} catch (RuntimeException $exception) {
+    http_response_code(500);
+    echo '<!doctype html><html><body style="font-family:Arial;padding:24px;"><h2>Database unavailable</h2><p>' . htmlspecialchars($exception->getMessage()) . '</p></body></html>';
+    exit;
+}
 $dbError = '';
 
 $order = null;

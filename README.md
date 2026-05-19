@@ -1,3 +1,46 @@
+# Bay / Klint's Cafe
+
+The final site entry is `http://localhost/bay/`, which redirects to the built React frontend at `frontend/dist/index.html#/`.
+
+## Run
+
+1. Start Apache and MySQL in XAMPP.
+2. Build the React app:
+
+```powershell
+cd C:\xampp\htdocs\bay\frontend
+npm run build
+```
+
+3. Open the site:
+
+```text
+http://localhost/bay/
+```
+
+If you need the direct build URL, use:
+
+```text
+http://localhost/bay/frontend/dist/index.html#/
+```
+
+## Hosting Checklist
+
+### XAMPP
+- Put the project in `htdocs/bay` so the `/bay` paths line up.
+- Import or create the `web_system` database before first login.
+- Run `setup.php` once if you want the app to create tables and seed accounts.
+- Build the frontend before opening the site so `frontend/dist` exists.
+- Make sure Apache and MySQL are both running.
+
+### cPanel / Shared Hosting
+- Upload the full project folder, including `frontend/dist`.
+- Set the document root or site path to point to the project root.
+- Confirm PHP has permission to create tables in the target database.
+- Set `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_PORT` if your host does not use localhost defaults.
+- Verify the host allows PHP sessions and cookie storage.
+- Rebuild the frontend locally before upload whenever UI code changes.
+- Test login with `jireh / faith` for admin and `jai / 212121` for staff after deployment.
 # Web System - User Registration & Admin Management
 
 A complete PHP-based web system with user registration, login, and admin dashboard functionality.

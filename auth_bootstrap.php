@@ -8,10 +8,34 @@ function get_auth_database_connection(): mysqli
     $database = getenv('DB_NAME') ?: 'web_system';
     $port = (int) (getenv('DB_PORT') ?: 3306);
 
-    $conn = new mysqli($host, $user, $password, $database, $port);
+    $conn = @new mysqli($host, $user, $password, $database, $port);
 
     if ($conn->connect_error) {
-        throw new RuntimeException('Database connection failed: ' . $conn->connect_error);
+        $serverConn = @new mysqli($host, $user, $password, '', $port);
+
+        if ($serverConn->connect_error) {
+            throw new RuntimeException('Database connection failed: ' . $serverConn->connect_error);
+        }
+
+        $safeDatabase = preg_replace('/[^A-Za-z0-9_]/', '', $database);
+
+        if ($safeDatabase === '') {
+            throw new RuntimeException('Invalid database name configured');
+        }
+
+        if (!$serverConn->query("CREATE DATABASE IF NOT EXISTS `" . $safeDatabase . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")) {
+            $error = $serverConn->error;
+            $serverConn->close();
+            throw new RuntimeException('Failed to create database: ' . $error);
+        }
+
+        $serverConn->close();
+
+        $conn = new mysqli($host, $user, $password, $database, $port);
+
+        if ($conn->connect_error) {
+            throw new RuntimeException('Database connection failed: ' . $conn->connect_error);
+        }
     }
 
     return $conn;
