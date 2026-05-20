@@ -27,17 +27,41 @@ http://localhost/bay/frontend/dist/index.html#/
 ## Hosting Checklist
 
 ### XAMPP
-- Put the project in `htdocs/bay` so the `/bay` paths line up.
-- Import or create the `web_system` database before first login.
-- Run `setup.php` once if you want the app to create tables and seed accounts.
-- Build the frontend before opening the site so `frontend/dist` exists.
-- Make sure Apache and MySQL are both running.
+
+Post-deploy smoke tests
+- I added a `health.php` endpoint at the project root to quickly validate the backend after deploy. It is token-gated via the `HEALTH_TOKEN` env var (optional).
+- Two test scripts are included for post-deploy verification:
+    - `scripts/post_deploy_test.sh` (bash)
+    - `scripts/post_deploy_test.ps1` (PowerShell)
+
+Usage examples (after deploying backend and setting `VITE_API_BASE_URL` in Vercel):
+
+Linux / macOS (bash):
+```bash
+./scripts/post_deploy_test.sh https://api.yourdomain.com https://your-app.vercel.app YOUR_HEALTH_TOKEN
+```
+
+Windows PowerShell:
+```powershell
+.
+\scripts\post_deploy_test.ps1 -ApiBase "https://api.yourdomain.com" -Origin "https://your-app.vercel.app" -HealthToken "YOUR_HEALTH_TOKEN"
+```
+
+These scripts run:
+1. `GET /health.php` (optionally with token)
+2. OPTIONS preflight to `/auth_api.php` to validate CORS
+3. Login test with `jai / 212121` and save session cookie
+4. Call the protected `order_status_api.php?mode=queue` endpoint using the session
+5. Fetch `/products_api.php`
+
+If any step fails, the script exits non-zero and prints a helpful error.
 
 ### cPanel / Shared Hosting
 - Upload the full project folder, including `frontend/dist`.
 - Set the document root or site path to point to the project root.
 - Confirm PHP has permission to create tables in the target database.
 - Set `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_PORT` if your host does not use localhost defaults.
+- On HTTPS production hosts, PHP sessions now use `SameSite=None` and `Secure` so the Vercel frontend can keep the login cookie.
 - Verify the host allows PHP sessions and cookie storage.
 - Rebuild the frontend locally before upload whenever UI code changes.
 - Test login with `jireh / faith` for admin and `jai / 212121` for staff after deployment.

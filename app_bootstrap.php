@@ -6,6 +6,7 @@ function start_app_session(): void
     }
 
     $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (int)($_SERVER['SERVER_PORT'] ?? 0) === 443;
+    $sameSite = $isHttps ? 'None' : 'Lax';
 
     if (PHP_VERSION_ID >= 70300) {
         session_set_cookie_params([
@@ -14,10 +15,10 @@ function start_app_session(): void
             'domain' => '',
             'secure' => $isHttps,
             'httponly' => true,
-            'samesite' => 'Lax',
+            'samesite' => $sameSite,
         ]);
     } else {
-        session_set_cookie_params(0, '/; samesite=Lax', '', $isHttps, true);
+        session_set_cookie_params(0, '/; samesite=' . $sameSite, '', $isHttps, true);
     }
 
     ini_set('session.use_strict_mode', '1');

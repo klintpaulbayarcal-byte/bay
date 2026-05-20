@@ -137,13 +137,32 @@ function getPageFromPath(pathname: string): PageName {
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim().replace(/\/$/, '') ?? ''
 const runtimeOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+const runtimeHost = typeof window !== 'undefined' ? window.location.hostname : ''
+const runtimePort = typeof window !== 'undefined' ? window.location.port : ''
+const runtimePath = typeof window !== 'undefined' ? window.location.pathname : ''
+
+function inferBackendBaseFromPath(pathname: string) {
+    const normalized = pathname.replace(/\\/g, '/').replace(/\/+/g, '/').toLowerCase()
+    const marker = '/frontend/'
+    const markerIndex = normalized.indexOf(marker)
+
+    if (markerIndex > 0) {
+        return pathname.slice(0, markerIndex).replace(/\/$/, '')
+    }
+
+    return ''
+}
 
 function apiUrl(path: string) {
-    if (import.meta.env.DEV) {
+    const isViteLocalPreview = runtimeHost === 'localhost' && runtimePort === '5173'
+
+    if (import.meta.env.DEV || isViteLocalPreview) {
         return `/api${path}`
     }
 
-    return `${apiBase || runtimeOrigin}${path}`
+    const inferredBasePath = inferBackendBaseFromPath(runtimePath)
+    const resolvedBase = apiBase || `${runtimeOrigin}${inferredBasePath}`
+    return `${resolvedBase}${path}`
 }
 
 function mapApiProduct(product: ApiProduct): Product {
@@ -185,6 +204,7 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
         try {
             const response = await fetch(apiUrl('/auth_api.php'), {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'login',
@@ -327,6 +347,7 @@ function SignupPage({ navigate }: { navigate: NavigateFn }) {
         try {
             const response = await fetch(apiUrl('/auth_api.php'), {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'register',
@@ -432,7 +453,9 @@ function TrackOrderPage({ navigate }: { navigate: NavigateFn }) {
 
         try {
             const query = new URLSearchParams({ order_id: orderId.trim(), identity: identity.trim() })
-            const response = await fetch(`${apiUrl('/order_status_api.php')}?${query.toString()}`)
+            const response = await fetch(`${apiUrl('/order_status_api.php')}?${query.toString()}`, {
+                credentials: 'include',
+            })
             const data = await response.json()
 
             if (!response.ok || !data.success) {
@@ -545,7 +568,9 @@ function CafePage({ navigate }: { navigate: NavigateFn }) {
 
         async function loadProducts() {
             try {
-                const response = await fetch(apiUrl('/products_api.php'))
+                const response = await fetch(apiUrl('/products_api.php'), {
+                    credentials: 'include',
+                })
                 const data = await response.json()
 
                 if (!response.ok || !data.success || !Array.isArray(data.products)) {
@@ -621,6 +646,7 @@ function CafePage({ navigate }: { navigate: NavigateFn }) {
         try {
             const response = await fetch(apiUrl('/place_order.php'), {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     customer_name: customer.name,
