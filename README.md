@@ -61,6 +61,7 @@ If any step fails, the script exits non-zero and prints a helpful error.
 - Set the document root or site path to point to the project root.
 - Confirm PHP has permission to create tables in the target database.
 - Set `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_PORT` if your host does not use localhost defaults.
+- For local XAMPP testing, the auth bootstrap now falls back to `localhost` / `root` / empty password / `web_system` and seeds the `jireh` and `jai` accounts automatically.
 - On HTTPS production hosts, PHP sessions now use `SameSite=None` and `Secure` so the Vercel frontend can keep the login cookie.
 - Verify the host allows PHP sessions and cookie storage.
 - Rebuild the frontend locally before upload whenever UI code changes.

@@ -136,10 +136,10 @@ function getPageFromPath(pathname: string): PageName {
 }
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim().replace(/\/$/, '') ?? ''
+const defaultProductionApiBase = 'https://web-proj.42web.io/bay'
 const runtimeOrigin = typeof window !== 'undefined' ? window.location.origin : ''
 const runtimeHost = typeof window !== 'undefined' ? window.location.hostname : ''
 const runtimePort = typeof window !== 'undefined' ? window.location.port : ''
-const runtimePath = typeof window !== 'undefined' ? window.location.pathname : ''
 
 function isLoopbackHost(hostname: string) {
     return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
@@ -166,18 +166,6 @@ function resolveConfiguredApiBase(configuredBase: string, currentHost: string) {
     }
 }
 
-function inferBackendBaseFromPath(pathname: string) {
-    const normalized = pathname.replace(/\\/g, '/').replace(/\/+/g, '/').toLowerCase()
-    const marker = '/frontend/'
-    const markerIndex = normalized.indexOf(marker)
-
-    if (markerIndex > 0) {
-        return pathname.slice(0, markerIndex).replace(/\/$/, '')
-    }
-
-    return ''
-}
-
 function apiUrl(path: string) {
     const isViteLocalPreview = runtimeHost === 'localhost' && runtimePort === '5173'
 
@@ -185,9 +173,8 @@ function apiUrl(path: string) {
         return `/api${path}`
     }
 
-    const inferredBasePath = inferBackendBaseFromPath(runtimePath)
     const configuredBase = resolveConfiguredApiBase(apiBase, runtimeHost)
-    const resolvedBase = configuredBase || `${runtimeOrigin}${inferredBasePath}`
+    const resolvedBase = configuredBase || defaultProductionApiBase
     return `${resolvedBase}${path}`
 }
 
@@ -228,10 +215,10 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
         }
 
         try {
-            const response = await fetch(apiUrl('/login_api.php'), {
+            const response = await fetch(apiUrl('/auth_api.php'), {
                 method: 'POST',
-                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     action: 'login',
                     username: state.username,
@@ -371,9 +358,8 @@ function SignupPage({ navigate }: { navigate: NavigateFn }) {
         if (state.password !== state.confirmPassword) return setState((current) => ({ ...current, message: 'Passwords do not match', messageType: 'error' }))
 
         try {
-            const response = await fetch(apiUrl('/login_api.php'), {
+            const response = await fetch('/api/login', {
                 method: 'POST',
-                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'register',

@@ -29,13 +29,13 @@ Supabase integration
 - Create a `.env` in `frontend/` with:
 
 ```
-VITE_API_BASE_URL=http://localhost/bay
+VITE_API_BASE_URL=https://web-proj.42web.io/bay
 VITE_SUPABASE_URL=your-url
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-- `VITE_API_BASE_URL` points the React app to your existing PHP backend in production or when the frontend is deployed separately.
-- If you host the PHP files on the same domain as the frontend, leave it empty and the app will use the current site origin.
+- `VITE_API_BASE_URL` should point the React app to your hosted PHP backend when the frontend is deployed separately on Vercel.
+- For local-only development against XAMPP, override it with your local backend URL in `.env.local`.
 - Use `@supabase/supabase-js` when you are ready to connect the UI to a real Supabase database.
 
 Wiring example (done in this scaffold)
@@ -55,6 +55,12 @@ Deploy to Vercel
 - Push the repo to GitHub and import the `bay` repo into Vercel.
 - Set the environment variables `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY` in the Vercel project settings.
 - Vercel will auto-deploy the `frontend` folder (set Root to `frontend` in the import settings) and provide a staging URL.
+
+Important for production login
+
+- Set `VITE_API_BASE_URL` to your publicly reachable PHP backend URL, for example `https://web-proj.42web.io/bay`.
+- In your PHP host environment, set `CORS_ALLOWED_ORIGINS` to include your frontend origin (for example `https://finale-web.vercel.app`).
+- Keep `credentials: include` requests enabled and ensure backend responses include `Access-Control-Allow-Credentials: true`.
 
 Notes
 

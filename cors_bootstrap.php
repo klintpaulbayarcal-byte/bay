@@ -8,6 +8,10 @@ function get_allowed_cors_origins(): array
         return [
             'http://localhost:5173',
             'http://127.0.0.1:5173',
+            'http://localhost:5174',
+            'http://127.0.0.1:5174',
+            'https://finale-web.vercel.app',
+            'https://*.vercel.app',
         ];
     }
 
@@ -17,6 +21,26 @@ function get_allowed_cors_origins(): array
     });
 
     return array_values(array_unique($origins));
+}
+
+function cors_origin_is_allowed(string $origin, array $allowedOrigins): bool
+{
+    foreach ($allowedOrigins as $allowedOrigin) {
+        if ($allowedOrigin === $origin) {
+            return true;
+        }
+
+        if (strpos($allowedOrigin, '*') === false) {
+            continue;
+        }
+
+        $pattern = '#^' . str_replace('\\*', '.*', preg_quote($allowedOrigin, '#')) . '$#i';
+        if (preg_match($pattern, $origin) === 1) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function apply_api_cors_headers(): void
@@ -29,7 +53,7 @@ function apply_api_cors_headers(): void
 
     $allowedOrigins = get_allowed_cors_origins();
 
-    if (!in_array($origin, $allowedOrigins, true)) {
+    if (!cors_origin_is_allowed($origin, $allowedOrigins)) {
         return;
     }
 
