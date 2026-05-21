@@ -173,6 +173,12 @@ function apiUrl(path: string) {
         return `/api${path}`
     }
 
+    // If running on Vercel (or other vercel.app aliases), always use the
+    // externally hosted PHP backend to avoid proxy/html challenge pages.
+    if (runtimeHost.endsWith('.vercel.app') || runtimeHost === 'finale-web.vercel.app') {
+        return `${defaultProductionApiBase}${path}`
+    }
+
     const configuredBase = resolveConfiguredApiBase(apiBase, runtimeHost)
     const resolvedBase = configuredBase || defaultProductionApiBase
     return `${resolvedBase}${path}`
