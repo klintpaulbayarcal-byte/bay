@@ -141,6 +141,31 @@ const runtimeHost = typeof window !== 'undefined' ? window.location.hostname : '
 const runtimePort = typeof window !== 'undefined' ? window.location.port : ''
 const runtimePath = typeof window !== 'undefined' ? window.location.pathname : ''
 
+function isLoopbackHost(hostname: string) {
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
+}
+
+function resolveConfiguredApiBase(configuredBase: string, currentHost: string) {
+    if (!configuredBase) {
+        return ''
+    }
+
+    try {
+        const parsed = new URL(configuredBase)
+        const configuredHost = parsed.hostname.toLowerCase()
+        const runningLocally = isLoopbackHost(currentHost.toLowerCase())
+
+        // Prevent production builds from pointing to localhost values copied from local .env files.
+        if (isLoopbackHost(configuredHost) && !runningLocally) {
+            return ''
+        }
+
+        return parsed.toString().replace(/\/$/, '')
+    } catch {
+        return configuredBase
+    }
+}
+
 function inferBackendBaseFromPath(pathname: string) {
     const normalized = pathname.replace(/\\/g, '/').replace(/\/+/g, '/').toLowerCase()
     const marker = '/frontend/'
@@ -161,7 +186,8 @@ function apiUrl(path: string) {
     }
 
     const inferredBasePath = inferBackendBaseFromPath(runtimePath)
-    const resolvedBase = apiBase || `${runtimeOrigin}${inferredBasePath}`
+    const configuredBase = resolveConfiguredApiBase(apiBase, runtimeHost)
+    const resolvedBase = configuredBase || `${runtimeOrigin}${inferredBasePath}`
     return `${resolvedBase}${path}`
 }
 
@@ -202,7 +228,7 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
         }
 
         try {
-            const response = await fetch(apiUrl('/auth_api.php'), {
+            const response = await fetch(apiUrl('/login_api.php'), {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -345,7 +371,7 @@ function SignupPage({ navigate }: { navigate: NavigateFn }) {
         if (state.password !== state.confirmPassword) return setState((current) => ({ ...current, message: 'Passwords do not match', messageType: 'error' }))
 
         try {
-            const response = await fetch(apiUrl('/auth_api.php'), {
+            const response = await fetch(apiUrl('/login_api.php'), {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
