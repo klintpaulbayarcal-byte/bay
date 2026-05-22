@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-type PageName = 'login' | 'signup' | 'cafe' | 'track'
+type PageName = 'login' | 'signup' | 'cafe' | 'track' | 'admin'
 
 type Product = {
     id: number
@@ -129,6 +129,7 @@ function stockLabel(stock: number) {
 
 function getPageFromPath(pathname: string): PageName {
     const path = pathname.toLowerCase()
+    if (path.includes('admin')) return 'admin'
     if (path.includes('signup')) return 'signup'
     if (path.includes('track')) return 'track'
     if (path.includes('cafe') || path.includes('menu') || path.includes('order')) return 'cafe'
@@ -236,7 +237,18 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
                 throw new Error(data.message || 'Login failed')
             }
 
+            try {
+                localStorage.setItem('bay_role', String(data.role || ''))
+                localStorage.setItem('bay_user', String(data.fullname || state.username || ''))
+            } catch {
+                // ignore storage failures
+            }
+
             setState((current) => ({ ...current, message: data.message || 'Login successful', messageType: 'success' }))
+            if (data.role === 'admin') {
+                navigate('/admin')
+                return
+            }
             navigate('/cafe')
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Unable to login'
@@ -584,6 +596,170 @@ function TrackOrderPage({ navigate }: { navigate: NavigateFn }) {
                     )}
                 </div>
             </div>
+        </div>
+    )
+}
+
+function AdminDashboardPage({ navigate }: { navigate: NavigateFn }) {
+    const adminName = useMemo(() => {
+        try {
+            return localStorage.getItem('bay_user') || 'Administrator'
+        } catch {
+            return 'Administrator'
+        }
+    }, [])
+    const inventoryWatch = useMemo(() => fallbackProducts.filter((product) => product.stock <= 10), [])
+    const recentOrders = useMemo(
+        () => [
+            { id: 'A-2048', customer: 'Maria Santos', items: 4, total: 620, status: 'processing' },
+            { id: 'A-2047', customer: 'J. Cruz', items: 2, total: 290, status: 'received' },
+            { id: 'A-2046', customer: 'L. Dela Cruz', items: 5, total: 840, status: 'completed' },
+            { id: 'A-2045', customer: 'A. Gomez', items: 1, total: 140, status: 'out_for_delivery' },
+        ],
+        [],
+    )
+
+    const totalOrders = recentOrders.length
+    const activeOrders = recentOrders.filter((order) => order.status !== 'completed').length
+    const totalRevenue = recentOrders.reduce((sum, order) => sum + order.total, 0)
+
+    return (
+        <div className="admin-page">
+            <header className="admin-header">
+                <div className="admin-header-inner">
+                    <div>
+                        <p className="admin-kicker">Admin dashboard</p>
+                        <h1>Management Console</h1>
+                        <p className="admin-subtitle">
+                            Welcome back, {adminName}. This dashboard keeps the admin experience inside the React app so it works on Vercel.
+                        </p>
+                    </div>
+
+                    <div className="admin-header-actions">
+                        <button type="button" className="admin-pill" onClick={() => navigate('/cafe')}>
+                            Open Cafe
+                        </button>
+                        <button type="button" className="admin-pill" onClick={() => navigate('/track')}>
+                            Track Orders
+                        </button>
+                        <button type="button" className="admin-pill ghost" onClick={() => navigate('/')}>
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <main className="admin-shell">
+                <section className="admin-stats-grid">
+                    <article className="admin-stat-card accent">
+                        <span className="admin-stat-label">Today's Orders</span>
+                        <strong>{totalOrders}</strong>
+                        <small>Recent demo orders loaded in this dashboard</small>
+                    </article>
+                    <article className="admin-stat-card">
+                        <span className="admin-stat-label">Active Queue</span>
+                        <strong>{activeOrders}</strong>
+                        <small>Orders still waiting for completion</small>
+                    </article>
+                    <article className="admin-stat-card">
+                        <span className="admin-stat-label">Revenue</span>
+                        <strong>{currency(totalRevenue)}</strong>
+                        <small>Based on the current admin overview sample</small>
+                    </article>
+                    <article className="admin-stat-card">
+                        <span className="admin-stat-label">Low Stock</span>
+                        <strong>{inventoryWatch.length}</strong>
+                        <small>Items that need restocking attention</small>
+                    </article>
+                </section>
+
+                <section className="admin-grid">
+                    <article className="admin-panel admin-main-panel">
+                        <div className="admin-panel-header">
+                            <div>
+                                <p className="admin-panel-kicker">Operations</p>
+                                <h2>Recent Orders</h2>
+                            </div>
+                            <span className="admin-badge">Live-ready layout</span>
+                        </div>
+
+                        <div className="admin-table-wrap">
+                            <table className="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {recentOrders.map((order) => (
+                                        <tr key={order.id}>
+                                            <td>{order.id}</td>
+                                            <td>{order.customer}</td>
+                                            <td>{order.items}</td>
+                                            <td>{currency(order.total)}</td>
+                                            <td>
+                                                <span className={`status-chip status-${order.status}`}>{order.status.replace(/_/g, ' ')}</span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <aside className="admin-side-column">
+                        <article className="admin-panel">
+                            <div className="admin-panel-header">
+                                <div>
+                                    <p className="admin-panel-kicker">Inventory</p>
+                                    <h2>Low Stock Watch</h2>
+                                </div>
+                            </div>
+
+                            <div className="admin-list">
+                                {inventoryWatch.length === 0 ? (
+                                    <p className="admin-empty">No low-stock items right now.</p>
+                                ) : (
+                                    inventoryWatch.map((item) => (
+                                        <div className="admin-list-item" key={item.id}>
+                                            <div>
+                                                <strong>{item.name}</strong>
+                                                <p>{item.category}</p>
+                                            </div>
+                                            <span className="admin-stock">{item.stock} left</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </article>
+
+                        <article className="admin-panel admin-panel-dark">
+                            <div className="admin-panel-header">
+                                <div>
+                                    <p className="admin-panel-kicker">Shortcuts</p>
+                                    <h2>Manage Fast</h2>
+                                </div>
+                            </div>
+
+                            <div className="admin-shortcuts">
+                                <button type="button" className="shortcut-btn" onClick={() => navigate('/cafe')}>
+                                    Open menu view
+                                </button>
+                                <button type="button" className="shortcut-btn" onClick={() => navigate('/track')}>
+                                    Track public orders
+                                </button>
+                                <button type="button" className="shortcut-btn ghost" onClick={() => navigate('/')}>
+                                    Back to login
+                                </button>
+                            </div>
+                        </article>
+                    </aside>
+                </section>
+            </main>
         </div>
     )
 }
