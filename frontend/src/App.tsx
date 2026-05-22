@@ -166,6 +166,11 @@ function resolveConfiguredApiBase(configuredBase: string, currentHost: string) {
     }
 }
 
+function getProductionApiBase(currentHost: string) {
+    const configuredBase = resolveConfiguredApiBase(apiBase, currentHost)
+    return configuredBase || defaultProductionApiBase
+}
+
 function apiUrl(path: string) {
     const isViteLocalPreview = runtimeHost === 'localhost' && runtimePort === '5173'
 
@@ -173,14 +178,7 @@ function apiUrl(path: string) {
         return `/api${path}`
     }
 
-    // If running on Vercel (or other vercel.app aliases), use the local
-    // `/api` path which is implemented as a serverless proxy in Vercel.
-    if (runtimeHost.endsWith('.vercel.app') || runtimeHost === 'finale-web.vercel.app') {
-        return `/api${path}`
-    }
-
-    const configuredBase = resolveConfiguredApiBase(apiBase, runtimeHost)
-    const resolvedBase = configuredBase || defaultProductionApiBase
+    const resolvedBase = getProductionApiBase(runtimeHost)
     return `${resolvedBase}${path}`
 }
 
@@ -194,7 +192,7 @@ if (typeof window !== 'undefined' && (runtimeHost.endsWith('.vercel.app') || run
         window.addEventListener('load', () => {
             const iframe = document.createElement('iframe')
             iframe.style.display = 'none'
-            iframe.src = `${defaultProductionApiBase}/auth_api.php`
+            iframe.src = `${getProductionApiBase(runtimeHost)}/auth_api.php`
             document.body.appendChild(iframe)
 
             const remove = () => {
