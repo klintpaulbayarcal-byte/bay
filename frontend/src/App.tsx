@@ -237,12 +237,6 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
             }
 
             setState((current) => ({ ...current, message: data.message || 'Login successful', messageType: 'success' }))
-
-            if (data.role === 'admin' || data.role === 'staff') {
-                window.location.assign(apiUrl(`/${data.redirect_to || 'staff_panel.php'}`))
-                return
-            }
-
             navigate('/cafe')
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Unable to login'
