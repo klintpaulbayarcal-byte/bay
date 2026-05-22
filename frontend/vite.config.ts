@@ -11,7 +11,7 @@ export default defineConfig({
                 changeOrigin: true,
                 rewrite: (path) => {
                     if (path === '/api/login') {
-                        return '/login_api.php'
+                        return '/auth_api.php'
                     }
 
                     return path.replace(/^\/api/, '')
