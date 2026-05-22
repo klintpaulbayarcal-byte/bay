@@ -73,10 +73,14 @@ export default async function handler(req, res) {
                 })
             }
 
-            return res.status(retryResponse.status).type('json').send(responseText)
+            res.statusCode = retryResponse.status
+            res.setHeader('Content-Type', 'application/json')
+            return res.end(responseText)
         }
 
-        return res.status(firstResponse.status).type('json').send(responseText)
+        res.statusCode = firstResponse.status
+        res.setHeader('Content-Type', 'application/json')
+        return res.end(responseText)
     } catch (error) {
         console.error('Proxy error:', error);
         return res.status(500).json({
