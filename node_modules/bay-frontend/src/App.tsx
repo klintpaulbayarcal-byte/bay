@@ -173,15 +173,41 @@ function apiUrl(path: string) {
         return `/api${path}`
     }
 
-    // If running on Vercel (or other vercel.app aliases), always use the
-    // externally hosted PHP backend to avoid proxy/html challenge pages.
+    // If running on Vercel (or other vercel.app aliases), use the local
+    // `/api` path which is implemented as a serverless proxy in Vercel.
     if (runtimeHost.endsWith('.vercel.app') || runtimeHost === 'finale-web.vercel.app') {
-        return `${defaultProductionApiBase}${path}`
+        return `/api${path}`
     }
 
     const configuredBase = resolveConfiguredApiBase(apiBase, runtimeHost)
     const resolvedBase = configuredBase || defaultProductionApiBase
     return `${resolvedBase}${path}`
+}
+
+// Warm up: some hosts use a JS cookie challenge for bot protection. When
+// running the frontend on Vercel we load the backend auth page once in a
+// hidden iframe on startup so the challenge runs in the user's browser and
+// sets the required cookie before the SPA issues XHR/fetch calls.
+if (typeof window !== 'undefined' && (runtimeHost.endsWith('.vercel.app') || runtimeHost === 'finale-web.vercel.app')) {
+    try {
+        // Defer execution to avoid interfering with SSR/local dev
+        window.addEventListener('load', () => {
+            const iframe = document.createElement('iframe')
+            iframe.style.display = 'none'
+            iframe.src = `${defaultProductionApiBase}/auth_api.php`
+            document.body.appendChild(iframe)
+
+            const remove = () => {
+                try { iframe.remove() } catch { }
+            }
+
+            // Remove after a short delay once the iframe has loaded (or after 3s)
+            iframe.onload = () => setTimeout(remove, 500)
+            setTimeout(remove, 3000)
+        })
+    } catch {
+        // no-op: non-critical enhancement
+    }
 }
 
 function mapApiProduct(product: ApiProduct): Product {
@@ -247,11 +273,42 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
 
             navigate('/cafe')
         } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unable to login'
+
             setState((current) => ({
                 ...current,
-                message: error instanceof Error ? error.message : 'Unable to login',
+                message,
                 messageType: 'error',
             }))
+
+            // If the request failed due to CORS/network (common with gateway
+            // protections), fall back to a full-page form POST so the backend's
+            // JS challenge can run in the browser and set any required cookies.
+            if (message.includes('Failed to fetch') || message.includes('NetworkError') || message.includes('CORS')) {
+                try {
+                    const form = document.createElement('form')
+                    form.method = 'POST'
+                    form.action = apiUrl('/auth_api.php')
+                    form.style.display = 'none'
+
+                    const add = (name: string, value: string) => {
+                        const i = document.createElement('input')
+                        i.type = 'hidden'
+                        i.name = name
+                        i.value = value
+                        form.appendChild(i)
+                    }
+
+                    add('action', 'login')
+                    add('username', state.username)
+                    add('password', state.password)
+
+                    document.body.appendChild(form)
+                    form.submit()
+                } catch {
+                    // ignore fallback errors
+                }
+            }
         }
     }
 

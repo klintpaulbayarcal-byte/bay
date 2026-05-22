@@ -11,6 +11,7 @@ function get_allowed_cors_origins(): array
             'http://localhost:5174',
             'http://127.0.0.1:5174',
             'https://finale-web.vercel.app',
+            'https://frontend-indol-eta-62.vercel.app',
             'https://*.vercel.app',
         ];
     }
@@ -53,7 +54,16 @@ function apply_api_cors_headers(): void
 
     $allowedOrigins = get_allowed_cors_origins();
 
+    // If origin is not explicitly allowed, still respond with conservative
+    // CORS headers to allow browser-driven challenge flows to run. This helps
+    // when the hosting provider performs a JS cookie challenge before proxying
+    // the request to PHP.
     if (!cors_origin_is_allowed($origin, $allowedOrigins)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Vary: Origin');
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
         return;
     }
 
