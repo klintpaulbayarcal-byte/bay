@@ -9,7 +9,13 @@ export default defineConfig({
             '/api': {
                 target: 'http://localhost/bay',
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api/, '')
+                rewrite: (path) => {
+                    if (path === '/api/login') {
+                        return '/login_api.php'
+                    }
+
+                    return path.replace(/^\/api/, '')
+                }
             }
         }
     }

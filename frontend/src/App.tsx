@@ -182,32 +182,6 @@ function apiUrl(path: string) {
     return `${resolvedBase}${path}`
 }
 
-// Warm up: some hosts use a JS cookie challenge for bot protection. When
-// running the frontend on Vercel we load the backend auth page once in a
-// hidden iframe on startup so the challenge runs in the user's browser and
-// sets the required cookie before the SPA issues XHR/fetch calls.
-if (typeof window !== 'undefined' && (runtimeHost.endsWith('.vercel.app') || runtimeHost === 'finale-web.vercel.app')) {
-    try {
-        // Defer execution to avoid interfering with SSR/local dev
-        window.addEventListener('load', () => {
-            const iframe = document.createElement('iframe')
-            iframe.style.display = 'none'
-            iframe.src = `${getProductionApiBase(runtimeHost)}/auth_api.php`
-            document.body.appendChild(iframe)
-
-            const remove = () => {
-                try { iframe.remove() } catch { }
-            }
-
-            // Remove after a short delay once the iframe has loaded (or after 3s)
-            iframe.onload = () => setTimeout(remove, 500)
-            setTimeout(remove, 3000)
-        })
-    } catch {
-        // no-op: non-critical enhancement
-    }
-}
-
 function mapApiProduct(product: ApiProduct): Product {
     return {
         id: Number(product.id),
@@ -245,7 +219,7 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
         }
 
         try {
-            const response = await fetch(apiUrl('/auth_api.php'), {
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -286,7 +260,7 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
                 try {
                     const form = document.createElement('form')
                     form.method = 'POST'
-                    form.action = apiUrl('/auth_api.php')
+                    form.action = '/api/login'
                     form.style.display = 'none'
 
                     const add = (name: string, value: string) => {

@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const backendUrl = 'https://web-proj.42web.io/bay/auth_api.php';
+        const backendUrl = 'https://web-proj.42web.io/bay/login_api.php';
 
         const response = await fetch(backendUrl, {
             method: 'POST',
