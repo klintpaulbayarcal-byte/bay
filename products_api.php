@@ -1,8 +1,5 @@
 <?php
 require_once __DIR__ . '/app_bootstrap.php';
-require_once __DIR__ . '/cors_bootstrap.php';
-apply_api_cors_headers();
-handle_api_preflight_request();
 start_app_session();
 header('Content-Type: application/json');
 

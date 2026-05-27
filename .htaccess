@@ -1,0 +1,28 @@
+# Serve the built SPA at /bay and preserve PHP/API endpoints
+DirectoryIndex frontend/dist/index.html index.php index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /bay/
+
+    # Allow direct access to existing files and directories
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Map SPA build assets to frontend/dist so static files are served correctly
+    RewriteRule ^assets/(.*)$ frontend/dist/assets/$1 [L]
+    RewriteRule ^favicon.ico$ frontend/dist/favicon.ico [L]
+    RewriteRule ^robots.txt$ frontend/dist/robots.txt [L]
+
+    # Do not rewrite PHP files or API folder - let Apache/PHP handle them
+    RewriteRule ^(.*\.php|api/.*)$ - [L]
+
+    # Serve SPA index for all other requests (client-side routing)
+    RewriteRule ^.*$ frontend/dist/index.html [L,QSA]
+</IfModule>
+
+# Fallback for servers without mod_rewrite: simple redirect for root
+<IfModule !mod_rewrite.c>
+    RedirectMatch 302 ^/bay/?$ /bay/frontend/dist/index.html
+</IfModule>

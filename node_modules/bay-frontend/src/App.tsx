@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-type PageName = 'login' | 'signup' | 'cafe' | 'track' | 'admin'
+type PageName = 'login' | 'signup' | 'cafe' | 'track' | 'admin' | 'legacyCafe'
 
 type Product = {
     id: number
@@ -104,7 +104,7 @@ const fallbackProducts: Product[] = [
         description: 'Freshly baked chocolate muffin.',
         price: 85,
         stock: 8,
-        image: 'https://images.unsplash.com/photo-1604882406195-d94d4f33b0a9?w=900&h=700&fit=crop',
+        image: 'https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=900&h=700&fit=crop',
     },
     {
         id: 7,
@@ -132,11 +132,16 @@ function getPageFromPath(pathname: string): PageName {
     if (path.includes('admin')) return 'admin'
     if (path.includes('signup')) return 'signup'
     if (path.includes('track')) return 'track'
-    if (path.includes('cafe') || path.includes('menu') || path.includes('order')) return 'cafe'
+    if (path.includes('cafe') || path.includes('menu') || path.includes('order')) return 'legacyCafe'
     return 'login'
 }
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim().replace(/\/$/, '') ?? ''
+// Base URL where the Apache/PHP backend is served. Set this in your .env as
+// VITE_SERVER_BASE_URL (for example: http://localhost/bay). Defaults to
+// 'http://localhost/bay' for a local XAMPP setup.
+const serverBaseRaw = (import.meta.env.VITE_SERVER_BASE_URL as string | undefined) ?? 'http://localhost/bay'
+const serverBase = serverBaseRaw.trim().replace(/\/$/, '')
 const defaultProductionApiBase = 'https://web-proj.42web.io/bay'
 const runtimeOrigin = typeof window !== 'undefined' ? window.location.origin : ''
 const runtimeHost = typeof window !== 'undefined' ? window.location.hostname : ''
@@ -179,8 +184,16 @@ function apiUrl(path: string) {
         return `/api${path}`
     }
 
-    const resolvedBase = getProductionApiBase(runtimeHost)
-    return `${resolvedBase}${path}`
+    // In production builds, prefer the configured server base (VITE_SERVER_BASE_URL)
+    // which points to where Apache/PHP is hosting the backend (for example: '/bay').
+    // Fall back to the production API base when serverBase is empty.
+    const productionBase = serverBase || getProductionApiBase(runtimeHost)
+    return `${productionBase}${path}`
+}
+
+function redirectToLegacyCafe() {
+    const base = serverBase || 'http://localhost/bay'
+    window.location.replace(base.replace(/\/$/, '') + '/cafe.php')
 }
 
 function mapApiProduct(product: ApiProduct): Product {
@@ -220,7 +233,7 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
         }
 
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch(apiUrl('/auth_api.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -231,7 +244,15 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
                 }),
             })
 
-            const data = await response.json()
+            const contentType = (response.headers.get('content-type') || '').toLowerCase()
+            let data: any = null
+
+            if (contentType.includes('application/json')) {
+                data = await response.json()
+            } else {
+                const text = await response.text()
+                throw new Error('Unexpected response from server: ' + (text || '').slice(0, 500))
+            }
 
             if (!response.ok || !data.success) {
                 throw new Error(data.message || 'Login failed')
@@ -245,11 +266,31 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
             }
 
             setState((current) => ({ ...current, message: data.message || 'Login successful', messageType: 'success' }))
-            if (data.role === 'admin') {
-                navigate('/admin')
+
+            // If the backend provides a PHP redirect target (server-side dashboard),
+            // perform a full-page redirect so the Apache/PHP dashboard is loaded.
+            if (typeof data.redirect_to === 'string' && data.redirect_to.toLowerCase().endsWith('.php')) {
+                const base = serverBase || '/bay'
+                window.location.href = base.replace(/\/$/, '') + '/' + data.redirect_to.replace(/^\/+/, '')
                 return
             }
-            navigate('/cafe')
+
+            // If no explicit PHP redirect was provided but the backend role is admin/staff,
+            // prefer the server-side dashboards (avoid sending staff/admin into the SPA cafe).
+            if (data.role === 'admin') {
+                const base = serverBase || '/bay'
+                window.location.href = base.replace(/\/$/, '') + '/admin_dashboard.php'
+                return
+            }
+
+            if (data.role === 'staff') {
+                const base = serverBase || '/bay'
+                window.location.href = base.replace(/\/$/, '') + '/staff_panel.php'
+                return
+            }
+
+            // Default for regular users/guests: SPA cafe view
+            redirectToLegacyCafe()
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Unable to login'
 
@@ -266,7 +307,7 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
                 try {
                     const form = document.createElement('form')
                     form.method = 'POST'
-                    form.action = '/api/login'
+                    form.action = apiUrl('/auth_api.php')
                     form.style.display = 'none'
 
                     const add = (name: string, value: string) => {
@@ -309,7 +350,7 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
 
                 <div className="col-md-6 signin-right">
                     <form onSubmit={submit}>
-                        <h1 className="signin-title h3">Staff Sign In</h1>
+                        <h1 className="signin-title h3"> Sign In</h1>
                         <p className="signin-subtitle">Access your management dashboard</p>
 
                         {state.message && <div className={`alert ${state.messageType === 'error' ? 'alert-danger' : 'alert-success'}`}>{state.message}</div>}
@@ -360,7 +401,7 @@ function LoginPage({ navigate }: { navigate: NavigateFn }) {
 
                         <div className="auth-link-box">
                             <p>Guest Customer?</p>
-                            <button className="btn auth-outline-btn w-100" type="button" onClick={() => navigate('/cafe')}>
+                            <button className="btn auth-outline-btn w-100" type="button" onClick={redirectToLegacyCafe}>
                                 Browse Menu & Order
                             </button>
                         </div>
@@ -574,7 +615,7 @@ function TrackOrderPage({ navigate }: { navigate: NavigateFn }) {
                         </button>
 
                         <p className="text-center signup-footer">
-                            Back to menu? <button type="button" className="text-link-btn" onClick={() => navigate('/cafe')}>Open Cafe</button>
+                            Back to menu? <button type="button" className="text-link-btn" onClick={redirectToLegacyCafe}>Open Cafe</button>
                         </p>
                     </form>
 
@@ -636,7 +677,7 @@ function AdminDashboardPage({ navigate }: { navigate: NavigateFn }) {
                     </div>
 
                     <div className="admin-header-actions">
-                        <button type="button" className="admin-pill" onClick={() => navigate('/cafe')}>
+                        <button type="button" className="admin-pill" onClick={redirectToLegacyCafe}>
                             Open Cafe
                         </button>
                         <button type="button" className="admin-pill" onClick={() => navigate('/track')}>
@@ -746,7 +787,7 @@ function AdminDashboardPage({ navigate }: { navigate: NavigateFn }) {
                             </div>
 
                             <div className="admin-shortcuts">
-                                <button type="button" className="shortcut-btn" onClick={() => navigate('/cafe')}>
+                                <button type="button" className="shortcut-btn" onClick={redirectToLegacyCafe}>
                                     Open menu view
                                 </button>
                                 <button type="button" className="shortcut-btn" onClick={() => navigate('/track')}>
@@ -1079,6 +1120,11 @@ export default function App() {
     }, [])
 
     function navigate(path: string) {
+        if (path === '/cafe') {
+            redirectToLegacyCafe()
+            return
+        }
+
         if (path.startsWith('#')) {
             document.querySelector(path)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             return
@@ -1090,6 +1136,9 @@ export default function App() {
 
     if (page === 'signup') return <SignupPage navigate={navigate} />
     if (page === 'track') return <TrackOrderPage navigate={navigate} />
-    if (page === 'cafe') return <CafePage navigate={navigate} />
+    if (page === 'legacyCafe') {
+        redirectToLegacyCafe()
+        return <div className="auth-page" />
+    }
     return <LoginPage navigate={navigate} />
 }

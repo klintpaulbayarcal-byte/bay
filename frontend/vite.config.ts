@@ -5,6 +5,8 @@ export default defineConfig({
     plugins: [react()],
     server: {
         port: 5173,
+        strictPort: true,
+        host: true,
         proxy: {
             '/api': {
                 target: 'http://localhost/bay',
@@ -16,6 +18,10 @@ export default defineConfig({
 
                     return path.replace(/^\/api/, '')
                 }
+            },
+            '/bay': {
+                target: 'http://localhost',
+                changeOrigin: true
             }
         }
     }

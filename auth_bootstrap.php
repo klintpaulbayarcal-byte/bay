@@ -1,44 +1,12 @@
 <?php
 
-function normalize_mysql_host(string $host): string
-{
-    $value = trim($host);
-
-    if ($value === '') {
-        return '';
-    }
-
-    if (preg_match('#^[a-z]+://#i', $value) === 1) {
-        $parsedHost = parse_url($value, PHP_URL_HOST);
-        if (is_string($parsedHost) && $parsedHost !== '') {
-            $value = $parsedHost;
-        }
-    }
-
-    $value = preg_replace('#/.*$#', '', $value) ?? $value;
-
-    return trim($value);
-}
-
 function get_auth_database_connection(): mysqli
 {
-    $defaultHost = 'sql107.infinityfree.com';
-    $defaultUser = 'if0_41979375';
-    $defaultPassword = 'bebepogi2004';
-    $defaultDatabase = 'if0_41979375_websystem';
-    $defaultPort = 3306;
-
-    $configuredHost = normalize_mysql_host((string) (getenv('DB_HOST') ?: ''));
-    $configuredUser = trim((string) (getenv('DB_USER') ?: ''));
-    $configuredPassword = (string) (getenv('DB_PASSWORD') ?: '');
-    $configuredDatabase = trim((string) (getenv('DB_NAME') ?: ''));
-    $configuredPort = (int) (getenv('DB_PORT') ?: 0);
-
-    $host = ($configuredHost !== '' && filter_var($configuredHost, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) ? $configuredHost : $defaultHost;
-    $user = $configuredUser !== '' ? $configuredUser : $defaultUser;
-    $password = $configuredPassword !== '' ? $configuredPassword : $defaultPassword;
-    $database = $configuredDatabase !== '' ? $configuredDatabase : $defaultDatabase;
-    $port = $configuredPort > 0 ? $configuredPort : $defaultPort;
+    $host = getenv('DB_HOST') ?: 'localhost';
+    $user = getenv('DB_USER') ?: 'root';
+    $password = getenv('DB_PASSWORD') ?: '';
+    $database = getenv('DB_NAME') ?: 'web_system';
+    $port = (int) (getenv('DB_PORT') ?: 3306);
 
     $conn = @new mysqli($host, $user, $password, $database, $port);
 

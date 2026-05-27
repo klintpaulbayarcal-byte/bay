@@ -8,9 +8,10 @@
     "frontend"
   ],
   "scripts": {
-    "dev": "npm --prefix frontend run dev",
+    "start": "npm --prefix frontend run build && start \"\" \"http://localhost/bay/\"",
+    "dev": "npm --prefix frontend run build && start \"\" \"http://localhost/bay/\"",
     "build": "npm --prefix frontend run build",
-    "preview": "npm --prefix frontend run preview"
+    "preview": "start \"\" \"http://localhost/bay/\""
   },
   "devDependencies": {
     "@types/node": "^25.9.0"

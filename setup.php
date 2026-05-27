@@ -216,7 +216,7 @@ if ((int)($productRow['total'] ?? 0) === 0) {
         ["Cappuccino", "coffee", "Espresso with steamed milk and foam.", 165.00, "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop"],
         ["Mocha", "coffee", "Chocolate-infused espresso drink.", 175.00, "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?w=400&h=300&fit=crop"],
         ["Iced Tea Lemon", "non-coffee", "Refreshing brewed tea with lemon.", 110.00, "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&h=300&fit=crop"],
-        ["Chocolate Muffin", "pastry", "Freshly baked chocolate muffin.", 85.00, "https://images.unsplash.com/photo-1604882406195-d94d4f33b0a9?w=400&h=300&fit=crop"],
+        ["Chocolate Muffin", "pastry", "Freshly baked chocolate muffin.", 85.00, "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=400&h=300&fit=crop"],
         ["Ham and Cheese Sandwich", "food", "Toasted sandwich with ham and cheese.", 180.00, "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop"]
     ];
 

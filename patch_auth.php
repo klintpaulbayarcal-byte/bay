@@ -35,11 +35,11 @@ function normalize_mysql_host(string $host): string
 
 function get_auth_database_connection(): mysqli
 {
-    $defaultHost = \'sql107.infinityfree.com\';
-    $user = \'if0_41979375\';
-    $password = \'bebepogi2004\';
-    $database = \'if0_41979375_websystem\';
-    $port = 3306;
+    $defaultHost = getenv('DB_HOST') ?: '127.0.0.1';
+    $user = getenv('DB_USER') ?: 'root';
+    $password = getenv('DB_PASS') ?: '';
+    $database = getenv('DB_NAME') ?: 'if0_41979375_websystem';
+    $port = getenv('DB_PORT') ?: 3306;
 
     $configuredHost = trim((string) (getenv(\'DB_HOST\') ?: \'\'));
     if ($configuredHost !== \'\' && $configuredHost !== $defaultHost) {

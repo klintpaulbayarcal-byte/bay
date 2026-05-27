@@ -12,8 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Hard-coded InfinityFree credentials
-$DB_HOST = 'sql107.infinityfree.com';
+$DB_HOST = getenv('DB_HOST') ?: '127.0.0.1';
 $DB_USER = 'if0_41979375';
 $DB_PASS = 'bebepogi2004';
 $DB_NAME = 'if0_41979375_websystem';

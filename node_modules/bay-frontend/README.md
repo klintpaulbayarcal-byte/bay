@@ -36,6 +36,11 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 - `VITE_API_BASE_URL` should point the React app to your hosted PHP backend when the frontend is deployed separately on Vercel.
 - For local-only development against XAMPP, override it with your local backend URL in `.env.local`.
+ - For local-only development against XAMPP, set `VITE_SERVER_BASE_URL` in `frontend/.env` to your Apache base (recommended):
+```
+VITE_SERVER_BASE_URL=http://localhost/bay
+```
+This ensures the app always uses a single canonical backend URL for API calls and dashboard redirects.
 - Use `@supabase/supabase-js` when you are ready to connect the UI to a real Supabase database.
 
 Wiring example (done in this scaffold)

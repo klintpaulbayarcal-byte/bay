@@ -1,10 +1,10 @@
 <?php
-// Database configuration - hardcoded for reliability
-$db_host = 'sql107.infinityfree.com';
-$db_user = 'if0_41979375';
-$db_password = 'bebepogi2004';
-$db_name = 'if0_41979375_websystem';
-$db_port = 3306;
+// Database configuration - defaults suitable for local XAMPP
+$db_host = getenv('DB_HOST') ?: '127.0.0.1';
+$db_user = getenv('DB_USER') ?: 'root';
+$db_password = getenv('DB_PASS') ?: '';
+$db_name = getenv('DB_NAME') ?: 'if0_41979375_websystem';
+$db_port = getenv('DB_PORT') ?: 3306;
 
 header('Content-Type: application/json');
 
